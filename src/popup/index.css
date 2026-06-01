@@ -1,3 +1,45 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 360px;
+    overflow-x: hidden;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    opacity: 1;
+  }
+}
+
+@layer components {
+  .pc-input {
+    @apply w-full rounded-lg border border-pc-border bg-pc-surface px-3 py-2.5 text-sm text-pc-text shadow-sm transition-colors placeholder:text-slate-400 focus:border-pc-primary focus:outline-none focus:ring-2 focus:ring-pc-primary/20;
+  }
+
+  .pc-btn-primary {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-lg bg-pc-primary px-4 py-2.5 text-sm font-semibold text-white shadow-pop transition-colors hover:bg-pc-primary-hover focus:outline-none focus:ring-2 focus:ring-pc-primary/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .pc-btn-secondary {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-lg border border-pc-border bg-pc-surface px-4 py-2.5 text-sm font-medium text-pc-text shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300/60 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .pc-btn-ghost {
+    @apply inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-pc-muted transition-colors hover:bg-slate-100 hover:text-pc-text focus:outline-none focus:ring-2 focus:ring-slate-300/50;
+  }
+
+  .pc-section-title {
+    @apply mb-2.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-pc-muted;
+  }
+
+  .pc-step-badge {
+    @apply flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-pc-primary;
+  }
+}

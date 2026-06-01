@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { getPageTab } from '../shared/chrome';
 import { STORAGE_KEYS } from '../shared/constants';
 import type {
@@ -16,14 +16,59 @@ const DEFAULT_CONFIG: ConversionConfig = {
 };
 
 const OPERATION_LABELS: Record<ConversionOperation, string> = {
-  divide: 'تقسیم بر نرخ',
-  multiply: 'ضرب در نرخ',
+  divide: 'تقسیم',
+  multiply: 'ضرب',
 };
 
 const FORMULA_HINT: Record<ConversionOperation, string> = {
-  divide: 'خروجی = مقدار ÷ نرخ',
-  multiply: 'خروجی = مقدار × نرخ',
+  divide: 'مقدار ÷ نرخ',
+  multiply: 'مقدار × نرخ',
 };
+
+function Spinner() {
+  return (
+    <span
+      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+      aria-hidden
+    />
+  );
+}
+
+function Section({
+  step,
+  title,
+  children,
+}: {
+  step: number;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-pc-border bg-pc-surface p-3.5 shadow-card">
+      <h3 className="pc-section-title">
+        <span className="pc-step-badge">{step}</span>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function Alert({ variant, children }: { variant: 'success' | 'error'; children: ReactNode }) {
+  const styles =
+    variant === 'success'
+      ? 'border-emerald-200 bg-pc-success-bg text-emerald-800'
+      : 'border-red-200 bg-pc-danger-bg text-red-800';
+
+  return (
+    <p
+      role={variant === 'error' ? 'alert' : 'status'}
+      className={`rounded-lg border px-3 py-2.5 text-xs leading-relaxed ${styles}`}
+    >
+      {children}
+    </p>
+  );
+}
 
 export function Popup() {
   const [config, setConfig] = useState<ConversionConfig>(DEFAULT_CONFIG);
@@ -76,8 +121,8 @@ export function Popup() {
       const target = newTarget;
       const msg =
         target.source === 'auto'
-          ? `تشخیص خودکار: ${target.matchCount} قیمت پیدا شد.`
-          : 'عنصر از صفحه انتخاب شد.';
+          ? `${target.matchCount} قیمت با تشخیص خودکار پیدا شد.`
+          : 'قیمت از صفحه انتخاب شد.';
       applyTarget(target, msg);
       setPicking(false);
       setAutoDetecting(false);
@@ -109,12 +154,12 @@ export function Popup() {
         };
         applyTarget(
           target,
-          `تشخیص خودکار: ${target.matchCount} قیمت (${result.reason ?? 'شناسایی شد'})`,
+          `${target.matchCount} قیمت شناسایی شد (${result.reason ?? 'خودکار'})`,
         );
         return;
       }
 
-      setError('قیمت خودکار پیدا نشد. «انتخاب دستی» را بزنید.');
+      setError('قیمتی پیدا نشد. از «انتخاب دستی» روی صفحه استفاده کنید.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'تشخیص خودکار ناموفق بود.');
     } finally {
@@ -164,7 +209,7 @@ export function Popup() {
         return;
       }
 
-      setStatus(`${matched} قیمت تبدیل شد.`);
+      setStatus(`${matched} قیمت روی صفحه تبدیل شد.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'اعمال تبدیل ناموفق بود.');
     }
@@ -182,137 +227,190 @@ export function Popup() {
     }
   };
 
+  const hasTarget = Boolean(picked?.selector || config.selector.trim());
+  const rateReady = config.rate > 0;
+  const canApply = hasTarget && rateReady;
+
   return (
-    <div className="p-4 w-80">
-      <h2 className="text-base font-bold mb-3 border-b pb-2 text-slate-800">
-        تبدیل قیمت
-      </h2>
-      <div className="space-y-3">
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+    <div className="flex flex-col gap-3 p-4">
+      <header className="border-b border-pc-border pb-3">
+        <h1 className="text-lg font-bold tracking-tight text-pc-text">تبدیل قیمت</h1>
+        <p className="mt-0.5 text-xs leading-relaxed text-pc-muted">
+          قیمت‌ها را روی همان صفحه ببینید — بدون جابه‌جایی
+        </p>
+      </header>
+
+      {(status || error) && (
+        <div className="space-y-2">
+          {status && <Alert variant="success">{status}</Alert>}
+          {error && <Alert variant="error">{error}</Alert>}
+        </div>
+      )}
+
+      <Section step={1} title="انتخاب قیمت روی صفحه">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             disabled={autoDetecting || picking}
             onClick={() => void runAutoDetect()}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded font-medium text-sm"
+            className="pc-btn-primary"
           >
-            {autoDetecting ? 'در حال تشخیص…' : 'تشخیص خودکار'}
+            {autoDetecting ? (
+              <>
+                <Spinner />
+                در حال تشخیص…
+              </>
+            ) : (
+              'تشخیص خودکار'
+            )}
           </button>
           <button
             type="button"
             disabled={picking || autoDetecting}
             onClick={() => void handlePickOnPage()}
-            className="w-full py-2 bg-white border border-slate-300 hover:bg-slate-100 disabled:opacity-60 text-slate-800 rounded font-medium text-sm"
+            className="pc-btn-secondary"
           >
-            {picking ? 'در حال آماده‌سازی…' : 'انتخاب دستی'}
+            {picking ? 'آماده‌سازی…' : 'انتخاب دستی'}
           </button>
-          {picked && (
-            <div className="text-xs text-slate-700 bg-white border rounded p-2">
-              <div className="font-medium text-green-800">
-                {picked.source === 'auto' ? 'خودکار · ' : ''}
-                {picked.matchCount} مورد
+        </div>
+
+        {picked ? (
+          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-emerald-900">
+                  {picked.source === 'auto' ? 'تشخیص خودکار' : 'انتخاب دستی'}
+                </p>
+                <p className="mt-0.5 text-xs text-emerald-700">
+                  {picked.matchCount} عنصر قیمت
+                  {picked.reason ? ` · ${picked.reason}` : ''}
+                </p>
               </div>
-              {picked.reason && <div className="text-slate-500">منبع: {picked.reason}</div>}
-              {picked.preview && (
-                <div className="truncate text-slate-500">نمونه: {picked.preview}</div>
-              )}
+              <span className="rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                فعال
+              </span>
             </div>
-          )}
-        </div>
+            {picked.preview && (
+              <p className="mt-2 truncate rounded-md bg-white/70 px-2 py-1.5 font-mono text-[11px] text-slate-600">
+                {picked.preview}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2.5 text-center text-xs text-pc-muted">
+            هنوز قیمتی انتخاب نشده — یکی از دکمه‌های بالا را بزنید
+          </p>
+        )}
+      </Section>
 
-        <div>
-          <label className="block text-xs text-slate-600 mb-1">نرخ تبدیل</label>
-          <input
-            type="number"
-            min={0}
-            step="any"
-            required
-            className="w-full border rounded p-2 text-sm"
-            placeholder="مثلاً 177000"
-            value={config.rate > 0 ? config.rate : ''}
-            onChange={(e) => {
-              const value = e.target.value;
-              persistConfig({
-                ...config,
-                rate: value === '' ? 0 : Number(value),
-              });
-            }}
-          />
-        </div>
+      <Section step={2} title="تنظیم نرخ تبدیل">
+        <label className="mb-1.5 block text-sm font-medium text-pc-text" htmlFor="rate">
+          نرخ
+        </label>
+        <input
+          id="rate"
+          type="number"
+          min={0}
+          step="any"
+          required
+          className="pc-input"
+          placeholder="مثلاً ۱۷۷۰۰۰"
+          value={config.rate > 0 ? config.rate : ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            persistConfig({
+              ...config,
+              rate: value === '' ? 0 : Number(value),
+            });
+          }}
+        />
 
-        <div>
-          <label className="block text-xs text-slate-600 mb-1">عملیات</label>
-          <select
-            className="w-full border rounded p-2 text-sm"
-            value={config.operation}
-            onChange={(e) =>
-              persistConfig({
-                ...config,
-                operation: e.target.value as ConversionOperation,
-              })
-            }
-          >
-            {(Object.keys(OPERATION_LABELS) as ConversionOperation[]).map((op) => (
-              <option key={op} value={op}>
+        <p className="mt-3 mb-1.5 text-sm font-medium text-pc-text">عملیات</p>
+        <div
+          className="grid grid-cols-2 gap-1 rounded-lg border border-pc-border bg-slate-100 p-1"
+          role="group"
+          aria-label="عملیات تبدیل"
+        >
+          {(Object.keys(OPERATION_LABELS) as ConversionOperation[]).map((op) => {
+            const active = config.operation === op;
+            return (
+              <button
+                key={op}
+                type="button"
+                aria-pressed={active}
+                onClick={() => persistConfig({ ...config, operation: op })}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-all ${
+                  active
+                    ? 'bg-pc-surface text-pc-primary shadow-sm ring-1 ring-pc-primary/20'
+                    : 'text-pc-muted hover:text-pc-text'
+                }`}
+              >
                 {OPERATION_LABELS[op]}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-500 mt-1">{FORMULA_HINT[config.operation]}</p>
+              </button>
+            );
+          })}
         </div>
+        <p className="mt-2 text-center text-xs text-pc-muted">
+          {FORMULA_HINT[config.operation]}
+        </p>
 
-        <div>
-          <label className="block text-xs text-slate-600 mb-1">نماد خروجی (اختیاری)</label>
-          <input
-            type="text"
-            className="w-full border rounded p-2 text-sm"
-            placeholder="USD"
-            value={config.symbol}
-            onChange={(e) => persistConfig({ ...config, symbol: e.target.value })}
-          />
-        </div>
+        <label className="mb-1.5 mt-3 block text-sm font-medium text-pc-text" htmlFor="symbol">
+          نماد خروجی{' '}
+          <span className="font-normal text-pc-muted">(اختیاری)</span>
+        </label>
+        <input
+          id="symbol"
+          type="text"
+          className="pc-input"
+          placeholder="USD"
+          dir="ltr"
+          value={config.symbol}
+          onChange={(e) => persistConfig({ ...config, symbol: e.target.value })}
+        />
+      </Section>
 
+      <div className="space-y-2 pt-0.5">
         <button
           type="button"
+          disabled={!canApply}
           onClick={() => void handleApply()}
-          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-sm"
+          className="pc-btn-primary"
+          title={
+            !hasTarget
+              ? 'ابتدا قیمت را انتخاب کنید'
+              : !rateReady
+                ? 'نرخ را وارد کنید'
+                : undefined
+          }
         >
           اعمال روی صفحه
         </button>
-
-        <button
-          type="button"
-          onClick={() => void handleStop()}
-          className="w-full py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded text-sm"
-        >
+        <button type="button" onClick={() => void handleStop()} className="pc-btn-secondary">
           حذف تبدیل‌ها
         </button>
+      </div>
 
+      <div className="border-t border-pc-border pt-1">
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
-          className="w-full text-xs text-slate-500 hover:text-slate-700"
+          className="pc-btn-ghost"
+          aria-expanded={showAdvanced}
         >
-          {showAdvanced ? '▲ پیشرفته' : '▼ پیشرفته (CSS)'}
+          <span className="text-[10px]" aria-hidden>
+            {showAdvanced ? '▲' : '▼'}
+          </span>
+          تنظیمات پیشرفته (سلکتور CSS)
         </button>
         {showAdvanced && (
           <input
             type="text"
-            className="w-full border rounded p-2 text-sm font-mono"
+            dir="ltr"
+            className="pc-input mt-1 font-mono text-xs"
             placeholder='[data-testid="price-final"]'
             value={config.selector}
             onChange={(e) => persistConfig({ ...config, selector: e.target.value })}
           />
-        )}
-
-        {status && (
-          <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded p-2">
-            {status}
-          </p>
-        )}
-        {error && (
-          <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
-            {error}
-          </p>
         )}
       </div>
     </div>

@@ -35,7 +35,7 @@ const processPrices = () => {
     const badge = document.createElement('div');
     badge.className = BADGE_CLASS;
     badge.style.cssText =
-      'display:inline-flex; background:#fef08a; color:#854d0e; padding:2px 6px; border-radius:4px; font-size:0.85em; font-weight:bold; margin:4px 0; direction:ltr;';
+      'display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);color:#3730a3;padding:3px 8px;border-radius:6px;font-size:0.8125rem;font-weight:600;margin:4px 0 4px 6px;direction:ltr;border:1px solid #c7d2fe;box-shadow:0 1px 2px rgba(79,70,229,0.12);font-family:system-ui,sans-serif;letter-spacing:0.01em;';
     badge.innerText = `≈ ${formattedPrice}${symbol ? ` ${symbol}` : ''}`;
 
     htmlEl.insertAdjacentElement('afterend', badge);

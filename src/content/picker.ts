@@ -15,18 +15,21 @@ const injectStyles = () => {
   style.textContent = `
     #${PICKER_ROOT_ID} {
       position: fixed; inset: 0; z-index: 2147483646; cursor: crosshair;
-      font-family: system-ui, sans-serif;
+      font-family: "Vazirmatn", "Segoe UI", Tahoma, system-ui, sans-serif;
     }
     #${PICKER_HINT_ID} {
-      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
-      background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 8px;
-      font-size: 14px; z-index: 2147483647; box-shadow: 0 4px 20px rgba(0,0,0,.25);
-      pointer-events: none; max-width: 90vw; text-align: center;
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      background: #312e81; color: #fff; padding: 12px 20px; border-radius: 12px;
+      font-size: 14px; font-weight: 500; z-index: 2147483647;
+      box-shadow: 0 8px 32px rgba(49, 46, 129, 0.35);
+      pointer-events: none; max-width: min(90vw, 420px); text-align: center;
+      line-height: 1.5; border: 1px solid rgba(255,255,255,0.12);
     }
     #${PICKER_BOX_ID} {
       position: fixed; pointer-events: none; z-index: 2147483647;
-      border: 2px solid #2563eb; background: rgba(37, 99, 235, 0.12);
-      border-radius: 4px; transition: all 0.05s ease-out;
+      border: 2px solid #4f46e5; background: rgba(79, 70, 229, 0.14);
+      border-radius: 8px; transition: left 0.05s, top 0.05s, width 0.05s, height 0.05s;
+      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
     }
   `;
   document.documentElement.appendChild(style);
